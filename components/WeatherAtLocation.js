@@ -61,15 +61,24 @@ class WeatherAtLocation extends PureComponent {
     this.loadSavedState();
   }
 
+  // remember PureComponent only updates when props/state are not
+  // shallowly equal to nextProps/nextState
   componentDidUpdate(prevProps, prevState) {
     console.log('COMPONENT DID UPDATE',
                 'NEW PROPS', this.props !== prevProps,
                 'NEW STATE', this.state !== prevState
     );
+
+    // should only be true once in component's lifetime
+    // after initial reception of geo-coordinates on props
     if (this.shouldFetchWeather(prevProps)) {
+      console.log('SHOULD FETCH WEATHER')
       this.loadWeatherDataToState();
     }
+
+    // should only occur when state data changes
     if (this.shouldStoreState(prevState)) {
+      console.log('SHOULD STORE STATE')
       this.storeState();
     }
   }
@@ -90,6 +99,7 @@ class WeatherAtLocation extends PureComponent {
   }
 
   fetchWeatherByCoords(lat, long) {
+    console.log('FETCHING WEATHER DATA');
     return fetch(
       `${WEATHER_API_URL}?lat=${lat}&lon=${long}&units=metric&APPID=${WEATHER_API_KEY}`
     )
@@ -110,6 +120,7 @@ class WeatherAtLocation extends PureComponent {
   }
 
   storeState() {
+    console.log('SAVING STATE TO STORAGE');
     return AsyncStorage.setItem(
       'lastState',
       JSON.stringify(this.state)

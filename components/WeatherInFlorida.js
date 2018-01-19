@@ -75,9 +75,9 @@ export default class WeatherInFlorida extends PureComponent {
     }
 
     this.socket.onmessage = ({ data }) => {
+      console.log('SOCKET MESSAGE');
       const { type, obs } = JSON.parse(data);
       const [ , , temp, humidity] = obs ? obs[0] : [];
-      console.log('SOCKET MESSAGE: ', { type, obs });
 
       switch (type) {
         case 'connection_opened': return this.setState({ status: 'Connected'});
