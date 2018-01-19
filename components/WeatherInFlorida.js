@@ -8,11 +8,34 @@ export default class WeatherInFlorida extends PureComponent {
     super();
     this.socket = null;
     this.state = {
-      connectionStatus: 'Loading',
+      status: 'Loading',
       lastUpdated: '',
       temp: 0,
       humidity: 0,
     };
+  }
+
+  render() {
+    const { status, lastUpdated, temp, humidity } = this.state;
+    const { styles } = this.props;
+    console.log('WEBSOCKET STATUS', status)
+
+    return (
+        <Card title="Weather in Florida" containerStyle={styles.section}>
+          <Text style={[ styles.paragraph, this.getStatusStyle() ]}>
+            Status: { status }
+          </Text>
+          <Text style={styles.paragraph}>
+            Last updated: { lastUpdated }
+          </Text>
+          <Text style={styles.paragraph}>
+            Temp: { temp }°C
+          </Text>
+          <Text style={styles.paragraph}>
+            Humidity: { humidity }%
+          </Text>
+        </Card>
+    );
   }
 
   componentDidMount() {
@@ -21,7 +44,7 @@ export default class WeatherInFlorida extends PureComponent {
 
   componentDidUpdate(prevProps) {
     if (this.shouldOpenNewSocket(prevProps)) return this.openNewSocket();
-    if (this.shouldCloseSocket(prevProps)) return this.closeSocket();
+    if (this.shouldCloseSocket(prevProps)) return this.socket.close();
   }
 
   componentWillUnmount() {
@@ -39,7 +62,7 @@ export default class WeatherInFlorida extends PureComponent {
   }
 
   openNewSocket() {
-    this.setState({ connectionStatus: 'Loading'});
+    this.setState({ status: 'Loading'});
     this.socket = new window.WebSocket(
       'ws://ws.weatherflow.com/swd/data?api_key=20c70eae-e62f-4d3b-b3a4-8586e90f3ac8'
     );
@@ -51,29 +74,25 @@ export default class WeatherInFlorida extends PureComponent {
       }))
     }
 
-    this.socket.onmessage = evt => {
-      console.log(evt.data);
-      const data = JSON.parse(evt.data);
-      switch (data.type) {
-        case 'connection_opened': return this.setState({ connectionStatus: 'Connected'});
-        case 'obs_air': return this.updateWithNewData(data);
+    this.socket.onmessage = ({ data }) => {
+      const { type, obs } = JSON.parse(data);
+      const [ , , temp, humidity] = obs ? obs[0] : [];
+      console.log('SOCKET MESSAGE: ', { type, obs });
+
+      switch (type) {
+        case 'connection_opened': return this.setState({ status: 'Connected'});
+        case 'obs_air': return this.updateState({ temp, humidity });
       }
     }
 
     this.socket.onclose = evt => {
-      console.log('closed_reason', evt.reason)
-      this.setState({ connectionStatus: 'Disconnected'})
+      console.log('SOCKET CLOSED - REASON:', evt.reason)
+      this.setState({ status: 'Disconnected'})
 
     };
   }
 
-  closeSocket() {
-    this.socket.close();
-  }
-
-  updateWithNewData(data) {
-    const [ , , temp, humidity] = data.obs[0];
-
+  updateState({ temp, humidity }) {
     this.setState({
       lastUpdated: createDateTimeString(),
       temp,
@@ -82,33 +101,10 @@ export default class WeatherInFlorida extends PureComponent {
   }
 
   getStatusStyle() {
-    const idx = ['Connected', 'Loading', 'Disconnected'].indexOf(this.state.connectionStatus);
+    const idx = ['Connected', 'Loading', 'Disconnected'].indexOf(this.state.status);
     return {
       color: ['green', 'orange', 'red'][ idx ]
     }
-  }
-
-  render() {
-    const { connectionStatus, lastUpdated, temp, humidity } = this.state;
-    const { styles } = this.props;
-    console.log('CONNECTION STATUS', connectionStatus)
-
-    return (
-        <Card title="Weather in Florida" containerStyle={styles.section}>
-          <Text style={[ styles.paragraph, this.getStatusStyle() ]}>
-            Status: { connectionStatus }
-          </Text>
-          <Text style={styles.paragraph}>
-            Last updated: { lastUpdated }
-          </Text>
-          <Text style={styles.paragraph}>
-            Temp: { temp }°C
-          </Text>
-          <Text style={styles.paragraph}>
-            Humidity: { humidity }%
-          </Text>
-        </Card>
-    );
   }
 }
 

@@ -7,6 +7,8 @@ export default function withLocation (Component) {
   return class LocationHOC extends React.Component {
     state = {
       coords: null,
+      lat: null,
+      long: null,
       errorMessage: null,
     };
 
@@ -30,7 +32,10 @@ export default function withLocation (Component) {
 
       try {
         const { coords } = await Location.getCurrentPositionAsync({});
-        this.setState({ coords });
+        this.setState({
+          lat: coords.latitude,
+          long: coords.longitude
+        });
       }
 
       catch (err) {
@@ -39,7 +44,12 @@ export default function withLocation (Component) {
     };
 
     render() {
-      return <Component location={this.state} {...this.props} />
+      return <Component
+                lat={this.state.lat}
+                long={this.state.long}
+                errorMessage={this.state.errorMessage}
+                {...this.props}
+              />
     }
   }
 

@@ -1,13 +1,13 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { AsyncStorage, Button, Text, View } from 'react-native';
 import Card from './Card';
-import withLocation from './HOCs/withLocation';
+import withGeoCoords from './HOCs/withGeoCoords';
 import createDateTimeString from '../lib/createDateTimeString';
 import { WEATHER_API_KEY } from '../keys';
 
 const WEATHER_API_URL = 'http://api.openweathermap.org/data/2.5/weather';
 
-class WeatherAtLocation extends Component {
+class WeatherAtLocation extends PureComponent {
   constructor() {
     super();
     this.state = {
@@ -17,11 +17,55 @@ class WeatherAtLocation extends Component {
     };
   }
 
+  render() {
+    const { updated, temp, humidity } = this.state;
+    const { styles, errorMessage } = this.props;
+
+    return (
+        <Card
+          title="Weather at your location"
+          containerStyle={styles.section}
+          wrapperStyle={styles.sectionInner}
+        >
+
+          <Text style={styles.paragraph}>
+            Last updated: { updated }
+          </Text>
+          <Text style={styles.paragraph}>
+            Temp: { temp }°C
+          </Text>
+          <Text style={styles.paragraph}>
+            Humidity: { humidity }%
+          </Text>
+
+
+          { errorMessage && (
+            <Text style={[ styles.paragraph, styles.error ]}>
+              Error: { errorMessage }
+            </Text>
+          )}
+
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <Button
+              onPress={this.loadWeatherDataToState}
+              style={{ alignSelf: 'flex-end' }}
+              title='Refresh'
+            />
+          </View>
+
+        </Card>
+    );
+  }
+
   componentDidMount() {
-    this.loadLastState();
+    this.loadSavedState();
   }
 
   componentDidUpdate(prevProps, prevState) {
+    console.log('COMPONENT DID UPDATE',
+                'NEW PROPS', this.props !== prevProps,
+                'NEW STATE', this.state !== prevState
+    );
     if (this.shouldFetchWeather(prevProps)) {
       this.loadWeatherDataToState();
     }
@@ -35,14 +79,14 @@ class WeatherAtLocation extends Component {
   }
 
   shouldFetchWeather(prevProps) {
-    const { coords } = this.props.location;
-    return coords && coords !== prevProps.location.coords;
+    const { lat } = this.props;
+    return lat && lat !== prevProps.lat;
   }
 
   loadWeatherDataToState = () => {
-    const { coords } = this.props.location;
-    return this.fetchWeatherByCoords(coords.latitude, coords.longitude)
-      .then(data => this.updateState(data))
+    const { lat, long } = this.props;
+    return this.fetchWeatherByCoords(lat, long)
+      .then(({ temp, humidity }) => this.updateState({ temp, humidity }))
   }
 
   fetchWeatherByCoords(lat, long) {
@@ -50,7 +94,10 @@ class WeatherAtLocation extends Component {
       `${WEATHER_API_URL}?lat=${lat}&lon=${long}&units=metric&APPID=${WEATHER_API_KEY}`
     )
       .then(response => response.json())
-      .then(data => data.main)
+      .then(({ main }) => ({
+        temp: main.temp,
+        humidity: main.humidity
+      }))
       .catch(err => console.error('ERROR FETCHING WEATHER:', err));
   }
 
@@ -70,51 +117,12 @@ class WeatherAtLocation extends Component {
     .catch(err => console.error('ERROR SAVING STATE:', err));
   }
 
-  loadLastState() {
+  loadSavedState() {
     return AsyncStorage.getItem('lastState')
       .then(stateString => stateString ? JSON.parse(stateString) : false)
       .then(state => state ? this.setState(state) : false)
       .catch(err => console.error('ERROR LOADING STATE:', err));
   }
-
-  render() {
-    const { updated, temp, humidity } = this.state;
-    const { styles, location } = this.props;
-    return (
-        <Card
-          title="Weather at your location"
-          containerStyle={styles.section}
-          wrapperStyle={styles.sectionInner}
-        >
-
-          <Text style={styles.paragraph}>
-            Last updated: { updated }
-          </Text>
-          <Text style={styles.paragraph}>
-            Temp: { temp }°C
-          </Text>
-          <Text style={styles.paragraph}>
-            Humidity: { humidity }%
-          </Text>
-
-
-          { location.errorMessage && (
-            <Text style={[ styles.paragraph, styles.error ]}>
-              Error: { location.errorMessage }
-            </Text>
-          )}
-
-          <View style={{ flex: 1, justifyContent: 'center' }}>
-            <Button
-              onPress={this.loadWeatherDataToState}
-              style={{ alignSelf: 'flex-end' }}
-              title='Refresh'
-            />
-          </View>
-
-        </Card>
-    );
-  }
 }
 
-export default withLocation(WeatherAtLocation);
+export default withGeoCoords(WeatherAtLocation);
