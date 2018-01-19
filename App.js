@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { AppState, View, StyleSheet } from 'react-native';
+import { AppState, ScrollView, StyleSheet, View } from 'react-native';
 import { Header } from 'react-native-elements'; // 0.19.0
 import WeatherInFlorida from './components/WeatherInFlorida';
 import WeatherAtLocation from './components/WeatherAtLocation';
@@ -37,15 +37,18 @@ export default class App extends Component {
 
     return (
       <View style={styles.container}>
+        <ScrollView>
 
-        <Header
-          centerComponent={{ text: 'Drakontas Weather App', style: styles.header }}
-          statusBarProps={{ barStyle: 'light-content' }}
-        />
-        <WeatherInFlorida styles={styles} openSocket={this.isAppActive()} />
+          <Header
+            centerComponent={{ text: 'Drakontas Weather App', style: styles.header }}
+            statusBarProps={{ barStyle: 'light-content' }}
+          />
 
-        <WeatherAtLocation styles={styles} />
+          <WeatherInFlorida styles={styles} openSocket={this.isAppActive()} />
 
+          <WeatherAtLocation styles={styles} />
+
+        </ScrollView>
       </View>
     );
   }
@@ -58,7 +61,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     paddingBottom: 20,
-
   },
 
   error: {
@@ -73,6 +75,11 @@ const styles = StyleSheet.create({
 
   section: {
     flex: 1,
+    minHeight: 250
+  },
+
+  sectionInner: {
+    flex: 1
   },
 
   paragraph: {

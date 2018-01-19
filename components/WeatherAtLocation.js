@@ -84,7 +84,7 @@ class WeatherAtLocation extends Component {
         <Card
           title="Weather at your location"
           containerStyle={styles.section}
-          wrapperStyle={styles.section}
+          wrapperStyle={styles.sectionInner}
         >
 
           <Text style={styles.paragraph}>

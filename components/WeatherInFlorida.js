@@ -94,7 +94,7 @@ export default class WeatherInFlorida extends PureComponent {
     console.log('CONNECTION STATUS', connectionStatus)
 
     return (
-        <Card title="Weather in Florida" containerStyle={{ flex: 1 }}>
+        <Card title="Weather in Florida" containerStyle={styles.section}>
           <Text style={[ styles.paragraph, this.getStatusStyle() ]}>
             Status: { connectionStatus }
           </Text>
