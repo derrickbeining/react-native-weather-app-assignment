@@ -3,6 +3,8 @@ import { Text } from 'react-native';
 import Card from './Card';
 import createDateTimeString from '../lib/createDateTimeString';
 
+const SOCKET_URL = 'ws://ws.weatherflow.com/swd/data?api_key=20c70eae-e62f-4d3b-b3a4-8586e90f3ac8';
+
 export default class WeatherInFlorida extends PureComponent {
   constructor() {
     super();
@@ -63,9 +65,7 @@ export default class WeatherInFlorida extends PureComponent {
 
   openNewSocket() {
     this.setState({ status: 'Loading'});
-    this.socket = new WebSocket(
-      'ws://ws.weatherflow.com/swd/data?api_key=20c70eae-e62f-4d3b-b3a4-8586e90f3ac8'
-    );
+    this.socket = new WebSocket(SOCKET_URL);
     this.socket.onopen = () => {
       this.socket.send(JSON.stringify({
         type: 'listen_start',
